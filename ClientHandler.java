@@ -31,6 +31,7 @@ private Socket socket;                  //    Connection with client
         try
         {
             username=br.readLine();            //Read username first
+            System.out.println("username="+username);
             if (username == null) return;
 
             if (username != null)
