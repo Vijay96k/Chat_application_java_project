@@ -1,5 +1,4 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+
 import java.io.IOException;        //for input-outputStream
 import java.net.ServerSocket;     //for seversocket
 import java.net.Socket;          //for socket
@@ -20,10 +19,9 @@ public class ChatServer {
                  Socket socket=  serversocket.accept();               //accepts client connections
                  System.out.println("client connected:"+socket);
              
-                DataInputStream dis = new DataInputStream(socket.getInputStream());
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            
 
-                ClientHandler client = new ClientHandler(socket, dis, dos);
+                ClientHandler client = new ClientHandler(socket);
                 ClientList.add(client);
                 Thread t1 =new Thread(client);
                 t1.start();
