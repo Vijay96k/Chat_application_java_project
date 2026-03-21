@@ -1,31 +1,46 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
     
 private Socket socket;                  //    Connection with client      
-    private DataInputStream dis;        //Receive messages
-    private DataOutputStream dos;       //Send messages
-    private boolean isActive;           //Check if client is connected
+    private BufferedReader br;        //Receive messages
+    private PrintWriter pw;       //Send messages
+    private boolean isActive;   //Check if client is connected
+   private String username;        
 
-    public ClientHandler(Socket socket,DataInputStream dis,DataOutputStream dos)      //Initializes client data
+    public ClientHandler(Socket socket)      //Initializes client data
     {
-        this .socket=socket;
-        this.dis=dis;
-        this.dos=dos;
+        this.socket=socket;
         this.isActive=true;
+        try {
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            pw = new PrintWriter(socket.getOutputStream(), true);
+        } catch (IOException e)
+         {
+            e.printStackTrace();
     }
+}
     public void run()
     {
         String message;
 
         try
         {
-            while(isActive)      
+            username=br.readLine();            //Read username first
+            if (username == null) return;
+
+            if (username != null)
+            { 
+             broadcast(username + " joined the chat");
+            }
+
+            while(isActive && (message = br.readLine()) != null)      
             {
-                message=dis.readUTF();                  //reads message from clients
+                               
 
                 if (message.equalsIgnoreCase("exit"))             //check if clients wants to exit
                     {                     
@@ -36,14 +51,8 @@ private Socket socket;                  //    Connection with client
                     break;
                 
                      }
-                for (ClientHandler client : ChatServer.ClientList)                   // Broadcast message to all clients
-                    {     
-                    if (client != this && client.isActive)
-                         {
-                        client.dos.writeUTF("Message is: " + message);
-                         }
-
-                     }
+                     broadcast(username + ": " + message);
+                
            }
         }
         catch(IOException e)
@@ -55,6 +64,8 @@ private Socket socket;                  //    Connection with client
             
             try {
                 ChatServer.ClientList.remove(this);
+                broadcast(username + " left the chat");
+
                 socket.close();
         }
         catch(IOException e)
@@ -63,4 +74,13 @@ private Socket socket;                  //    Connection with client
         }
 }
 }
+ private void broadcast(String msg) {
+        for (ClientHandler client : ChatServer.ClientList)
+             {
+                if (client.isActive)
+                { 
+            client.pw.println(msg);
+        }
     }
+    }
+}
