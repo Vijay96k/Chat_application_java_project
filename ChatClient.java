@@ -1,23 +1,27 @@
-import java.net.*;
 import java.io.*;
+import java.net.*;
 
 public class ChatClient {
 
     public static void main(String[] args) {
 
         try {
-            // 1. Connect to server
             Socket socket = new Socket("localhost", 8191);
             System.out.println("Connected to server");
 
-            // 2. Input & Output streams
             BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
 
-            // 3. Read user input
             BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
 
-            // 4. Thread to receive messages
+            // 👉 Ask username
+            System.out.print("Enter your name: ");
+            String username = console.readLine();
+
+            // 👉 Send username first
+            output.println(username);
+
+            // 👉 Thread to receive messages
             Thread receiveThread = new Thread(() -> {
                 try {
                     String msg;
@@ -31,10 +35,10 @@ public class ChatClient {
 
             receiveThread.start();
 
-            // 5. Send messages
+            // 👉 Send messages
             String userInput;
             while ((userInput = console.readLine()) != null) {
-                output.println(userInput);
+               output.println(userInput);
             }
 
             socket.close();
