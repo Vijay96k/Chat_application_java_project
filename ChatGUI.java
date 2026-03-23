@@ -2,7 +2,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
-import javax.swing.JOptionPane;
 
 public class ChatGUI extends Frame implements ActionListener {
 
@@ -18,31 +17,29 @@ public class ChatGUI extends Frame implements ActionListener {
 
     public ChatGUI() {
 
-        name = JOptionPane.showInputDialog(this, "Enter your name:");
+        // simple username (no popup)
+        name = javax.swing.JOptionPane.showInputDialog("Enter your name:");
         if (name == null || name.trim().isEmpty()) {
-            name = "User";
+        name = "User";
         }
 
         setTitle("Chat - " + name);
         setSize(400, 500);
         setLayout(new BorderLayout());
 
-        // Chat area
+        // chat display
         chatArea = new TextArea();
         chatArea.setEditable(false);
         add(chatArea, BorderLayout.CENTER);
 
-        // Bottom panel
-        Panel p = new Panel();
-        p.setLayout(new BorderLayout());
+        // input panel
+        Panel p = new Panel(new BorderLayout());
 
-        // ✅ FIX: Bigger input box
         messageField = new TextField();
-        messageField.setPreferredSize(new Dimension(0, 40)); // 👈 height increased
+        messageField.setPreferredSize(new Dimension(0, 35)); // bigger box
         p.add(messageField, BorderLayout.CENTER);
 
         sendButton = new Button("Send");
-        sendButton.setPreferredSize(new Dimension(70, 40)); // 👈 match height
         p.add(sendButton, BorderLayout.EAST);
 
         add(p, BorderLayout.SOUTH);
@@ -50,58 +47,44 @@ public class ChatGUI extends Frame implements ActionListener {
         sendButton.addActionListener(this);
         messageField.addActionListener(this);
 
-        messageField.requestFocus();
-
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent we) {
-                try {
-                    if (out != null) out.println("exit");
-                    if (socket != null) socket.close();
-                } catch (Exception e) {}
-                System.exit(0);
-            }
-        });
-
         setVisible(true);
         messageField.requestFocus();
 
-        new Thread(() -> startClient()).start();
+        // start client
+        new Thread(this::connect).start();
     }
 
-    void startClient() {
+    void connect() {
         try {
             socket = new Socket("127.0.0.1", 8191);
 
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            chatArea.append("Connected to server\n");
+            chatArea.append("Connected\n");
 
+            // send username
             out.println(name);
 
-            new Thread(() -> {
-                try {
-                    String msg;
-                    while ((msg = in.readLine()) != null) {
-                        chatArea.append(msg + "\n");
-                    }
-                } catch (Exception e) {
-                    chatArea.append("Disconnected\n");
+            // receive messages
+            while (true) {
+                String msg = in.readLine();
+                if (msg != null) {
+                    chatArea.append(msg + "\n");
                 }
-            }).start();
+            }
 
         } catch (Exception e) {
-            chatArea.append("Connection error\n");
+            chatArea.append("Error\n");
         }
     }
 
     public void actionPerformed(ActionEvent e) {
-        String msg = messageField.getText().trim();
+        String msg = messageField.getText();
 
-        if (out != null && !msg.isEmpty()) {
-            out.println(msg);
+        if (!msg.isEmpty()) {
+            out.println(msg); // server adds username
             messageField.setText("");
-            messageField.requestFocus();
         }
     }
 
